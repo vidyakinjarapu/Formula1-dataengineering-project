@@ -137,7 +137,7 @@ formula1-azure-project/
 
 ### Step 1 — Clone Repository
 ```bash
-git clone https://github.com/yourusername/formula1-azure-project.git
+git clone https://github.com/vidyakinjarapu/formula1-azure-project.git
 cd formula1-azure-project
 ```
 
