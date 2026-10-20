@@ -1,7 +1,7 @@
 # 🏎️ Formula 1 Azure Data Engineering Project
 
 ## 📋 Project Overview
-End-to-end data engineering pipeline that ingests Formula 1 race data from the Ergast API into Azure Data Lake Storage Gen2 using Azure Data Factory, transforms it through Bronze/Silver/Gold medallion layers in Azure Databricks with PySpark and SQL, and delivers actionable race insights via Power BI dashboards.
+End-to-end data engineering pipeline that ingests Formula 1 race data from the API into Azure Data Lake Storage Gen2 using Azure Data Factory, transforms it through Bronze/Silver/Gold medallion layers in Azure Databricks with PySpark and SQL, and delivers actionable race insights via Power BI dashboards.
 
 ---
 
