@@ -150,23 +150,26 @@ cd formula1-azure-project
 5. Create Azure Key Vault
 ```
 
-### Step 3 — Mount ADLS in Databricks
-```python
-# Run setup/mount_adls.py in Databricks notebook
-configs = {
-    "fs.azure.account.auth.type": "OAuth",
-    "fs.azure.account.oauth.provider.type": "org.apache.hadoop.fs.azurebfs.oauth2.ClientCredsTokenProvider",
-    "fs.azure.account.oauth2.client.id": "<client-id>",
-    "fs.azure.account.oauth2.client.secret": dbutils.secrets.get("kv-scope", "client-secret"),
-    "fs.azure.account.oauth2.client.endpoint": "https://login.microsoftonline.com/<tenant-id>/oauth2/token"
-}
+### Step 3 — Connect Databricks to ADLS Gen2 (RBAC via Unity Catalog)
 
-dbutils.fs.mount(
-    source="abfss://bronze@<storage-account>.dfs.core.windows.net/",
-    mount_point="/mnt/formula1/bronze",
-    extra_configs=configs
-)
-```
+Databricks accesses ADLS Gen2 through Azure RBAC using a **managed identity**, so no client secrets, account keys, or DBFS mounts are used.
+
+1. **Create an Access Connector for Azure Databricks.** This Azure resource gives Databricks a system-assigned managed identity.
+2. **Grant RBAC on the storage account.** On the ADLS Gen2 account, assign the Access Connector's managed identity the **Storage Blob Data Contributor** role. This lets it read and write the bronze, silver, and gold containers.
+3. **Create a Storage Credential in Unity Catalog.** In Catalog Explorer, go to External Data → Credentials and create a credential that references the Access Connector's resource ID.
+4. **Create External Locations.** Define one external location per container, each backed by the storage credential:
+   - `abfss://bronze@<storage-account>.dfs.core.windows.net/`
+   - `abfss://silver@<storage-account>.dfs.core.windows.net/`
+   - `abfss://gold@<storage-account>.dfs.core.windows.net/`
+5. **Grant Unity Catalog permissions.** Give users and groups `READ FILES` / `WRITE FILES` on the external locations, plus catalog and schema privileges for the managed tables.
+6. **Access data directly with `abfss://` paths or UC tables.** Notebooks read and write with no extra configuration:
+
+   ```python
+   df = spark.read.json("abfss://bronze@<storage-account>.dfs.core.windows.net/races/")
+   df.write.format("delta").saveAsTable("formula1.silver.races")
+   ```
+
+> Access is governed in two layers. Azure RBAC controls what the managed identity can reach in storage, and Unity Catalog controls which users can use it.
 
 ### Step 4 — Run ADF Pipelines
 ```
